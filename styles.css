@@ -1,0 +1,11 @@
+.x-country-trigger {
+  cursor: pointer;
+  margin-left: 4px;
+  font-size: 1em; /* Adjust if needed to match name size */
+}
+
+.x-country-trigger:hover {
+  opacity: 0.8;
+}
+
+

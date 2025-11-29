@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "X Country",
+  "version": "1.0",
+  "description": "Shows the country of an X user next to their profile name.",
+  "permissions": [
+    "storage",
+    "tabs",
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://x.com/*",
+    "*://twitter.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://x.com/*",
+        "*://twitter.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "countries.json"
+      ],
+      "matches": [
+        "*://x.com/*",
+        "*://twitter.com/*"
+      ]
+    }
+  ]
+}
+
