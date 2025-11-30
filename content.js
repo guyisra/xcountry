@@ -1,4 +1,5 @@
 let COUNTRY_TO_FLAG = {};
+const UNKNOWN_LABEL = 'Unknown';
 const countryMapPromise = loadCountryMap();
 
 const storage = chrome?.storage?.local || null;
@@ -90,12 +91,11 @@ function getUsernameFromContainer(root) {
 }
 
 function preloadCachedValue(username, trigger) {
-  if (!storage) return;
-  storage.get(username, (result) => {
-    if (result[username]) {
-      trigger.textContent = ` ${result[username]}`;
-      trigger.dataset.status = 'done';
-    }
+  safeStorageGet(username).then((result) => {
+    const cached = result[username];
+    if (!cached) return;
+    trigger.textContent = ` ${cached}`;
+    trigger.dataset.status = 'done';
   });
 }
 
@@ -117,6 +117,10 @@ async function handleTriggerHover(event) {
     const rawCountry = await requestCountryFromBackground(username);
     const resolved = await normalizeCountry(rawCountry);
     trigger.textContent = ` ${resolved}`;
+    if (resolved === UNKNOWN_LABEL) {
+      trigger.dataset.status = '';
+      return;
+    }
     await cacheCountry(username, resolved);
     trigger.dataset.status = 'done';
   } catch (error) {
@@ -127,21 +131,19 @@ async function handleTriggerHover(event) {
 }
 
 function getCachedCountry(username) {
-  if (!storage) return Promise.resolve(null);
-  return new Promise((resolve) => {
-    storage.get(username, (result) => resolve(result[username] || null));
-  });
+  return safeStorageGet(username).then((result) => result[username] || null);
 }
 
 function cacheCountry(username, value) {
-  if (!storage) return Promise.resolve();
-  return new Promise((resolve) => storage.set({ [username]: value }, resolve));
+  if (!value || value === UNKNOWN_LABEL) return Promise.resolve();
+  return safeStorageSet({ [username]: value });
 }
 
 async function normalizeCountry(raw) {
-  if (!raw) return 'Unknown';
+  if (!raw) return UNKNOWN_LABEL;
   await countryMapPromise;
   const trimmed = raw.trim();
+  if (!trimmed) return UNKNOWN_LABEL;
   return COUNTRY_TO_FLAG[trimmed] || trimmed;
 }
 
@@ -158,6 +160,44 @@ function requestCountryFromBackground(username) {
       }
       resolve(response?.country || null);
     });
+  });
+}
+
+function safeStorageGet(keys) {
+  if (!storage) return Promise.resolve({});
+  return new Promise((resolve) => {
+    try {
+      storage.get(keys, (result) => {
+        if (chrome.runtime?.lastError) {
+          console.warn('[X Country] storage.get failed:', chrome.runtime.lastError);
+          resolve({});
+          return;
+        }
+        resolve(result || {});
+      });
+    } catch (error) {
+      console.warn('[X Country] storage.get threw:', error);
+      resolve({});
+    }
+  });
+}
+
+function safeStorageSet(items) {
+  if (!storage) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    try {
+      storage.set(items, () => {
+        if (chrome.runtime?.lastError) {
+          console.warn('[X Country] storage.set failed:', chrome.runtime.lastError);
+          resolve(false);
+          return;
+        }
+        resolve(true);
+      });
+    } catch (error) {
+      console.warn('[X Country] storage.set threw:', error);
+      resolve(false);
+    }
   });
 }
 
