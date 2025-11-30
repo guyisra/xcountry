@@ -20,6 +20,8 @@ async function handleScrapeRequest(username) {
 
   try {
     await waitForTabComplete(tab.id);
+    // Wait for React to render the about page content
+    await sleep(1500);
     const [{ result }] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: scrapeCountryFromAboutPage,
@@ -31,6 +33,10 @@ async function handleScrapeRequest(username) {
       chrome.tabs.remove(tab.id);
     }
   }
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function waitForTabComplete(tabId) {
