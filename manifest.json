@@ -3,6 +3,12 @@
   "name": "X Country",
   "version": "1.0",
   "description": "Shows the country of an X user next to their profile name.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "permissions": [
     "storage",
     "tabs",
